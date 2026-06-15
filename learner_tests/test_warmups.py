@@ -20,16 +20,24 @@ Test ideas:
     (via :SUBCLASS_OF) but `q2_filter_by_cuisine("Chinese")` does not.
 """
 
-import pytest
-
 from queries.warmups import q1_list_recipes, q2_filter_by_cuisine, q3_subclass_traversal
 
 
 def test_q1_list_recipes_returns_all_five(driver):
-    """Replace this body with your own assertion(s)."""
-    pytest.fail("Not implemented — write your test here")
+    cypher = q1_list_recipes()
+    with driver.session() as session:
+        rows = [record["name"] for record in session.run(cypher)]
+    assert len(rows) == 5
+    assert "Margherita Pizza" in rows
+    assert "Mapo Tofu" in rows
 
 
 def test_q3_traversal_picks_up_subclasses(driver):
-    """Replace this body with your own assertion(s)."""
-    pytest.fail("Not implemented — write your test here")
+    cypher_direct, params_direct = q2_filter_by_cuisine("Chinese")
+    cypher_sub, params_sub = q3_subclass_traversal("Chinese")
+    with driver.session() as session:
+        direct = {r["name"] for r in session.run(cypher_direct, params_direct)}
+        with_sub = {r["name"] for r in session.run(cypher_sub, params_sub)}
+    assert "Mapo Tofu" in with_sub
+    assert "Mapo Tofu" not in direct
+    assert len(with_sub) == 3
